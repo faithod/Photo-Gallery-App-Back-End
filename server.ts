@@ -24,19 +24,62 @@ app.use(express.json()); //add body parser to each following route handler
 app.use(cors()) //add CORS support to each following route handler
 
 const client = new Client(dbConfig);
-client.connect();
+client.connect().then(()=> { //making sure the connection is successful
 
-app.get("/", async (req, res) => {
-  const dbres = await client.query('select * from categories');
-  res.json(dbres.rows);
-});
+  // app.get("/", async (req, res) => {
+  // });
+
+  //GET /users
+  app.get("/users", async (req, res) => {
+    const dbres = await client.query('select * from users');
+    const listOfUsers = dbres.rows;
+    res.json({
+      result: "success",
+      data: listOfUsers
+    });
+  });
+
+  //GET /favourites
+  app.get("/favourites", async (req, res) => {
+    const dbres = await client.query('select * from favourites');
+    const listOfFavourites = dbres.rows;
+    res.json({
+      result: "success",
+      data: listOfFavourites
+    });
+  });
+    
+  //POST /favourites/:userId
+  app.post<{userId: number}, {}, {photo_id: number, alt: string, url: string}>("/favourites/:userId", async (req, res) => {
+    const {photo_id, alt, url} = req.body;
+    const {userId} = req.params;
 
 
-//Start the server on the given port
-const port = process.env.PORT;
-if (!port) {
-  throw 'Missing PORT environment variable.  Set it in .env file.';
-}
-app.listen(port, () => {
-  console.log(`Server is up and running on port ${port}`);
-});
+    //to ckeck for duplicate photos
+    const dbres1 = await client.query(`select * from favourites where user_id = $1 and photo_id = $2`, [userId, photo_id]);
+    if (dbres1.rows.length===0){
+      const dbres2 = await client.query(`insert into favourites (user_id, photo_id, alt, url) values ($1,$2,$3,$4) returning *`, [userId, photo_id, alt, url]);
+      const photoInserted = dbres2.rows;
+
+      res.json({
+        result: "success",
+        data: photoInserted
+      });
+    } else {
+      res.status(405).json({
+        result: "failed",
+        data: `photo_id ${photo_id} for user id ${userId} is already in favourites table`
+      });
+    }
+  });
+
+  //Start the server on the given port
+  const port = process.env.PORT;
+  if (!port) {
+    throw 'Missing PORT environment variable.  Set it in .env file.';
+  }
+  app.listen(port, () => {
+    console.log(`Server is up and running on port ${port}`);
+  });
+})
+
