@@ -24,19 +24,28 @@ app.use(express.json()); //add body parser to each following route handler
 app.use(cors()) //add CORS support to each following route handler
 
 const client = new Client(dbConfig);
-client.connect();
+client.connect().then(()=> { //making sure the connection is successful
 
-app.get("/", async (req, res) => {
-  const dbres = await client.query('select * from categories');
-  res.json(dbres.rows);
-});
+  // app.get("/", async (req, res) => {
+  // });
 
+  //GET /users
+  app.get("/users", async (req, res) => {
+    const dbres = await client.query('select * from users');
+    const listOfUsers = dbres.rows;
+    res.json({
+      result: "success",
+      data: listOfUsers
+    });
+  });
 
-//Start the server on the given port
-const port = process.env.PORT;
-if (!port) {
-  throw 'Missing PORT environment variable.  Set it in .env file.';
-}
-app.listen(port, () => {
-  console.log(`Server is up and running on port ${port}`);
-});
+  //Start the server on the given port
+  const port = process.env.PORT;
+  if (!port) {
+    throw 'Missing PORT environment variable.  Set it in .env file.';
+  }
+  app.listen(port, () => {
+    console.log(`Server is up and running on port ${port}`);
+  });
+})
+
