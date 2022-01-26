@@ -39,6 +39,17 @@ client.connect().then(()=> { //making sure the connection is successful
     });
   });
 
+  //GET /favourites
+  app.get("/favourites", async (req, res) => {
+    const dbres = await client.query('select * from favourites');
+    const listOfFavourites = dbres.rows;
+    res.json({
+      result: "success",
+      data: listOfFavourites
+    });
+  });
+    
+
   //Start the server on the given port
   const port = process.env.PORT;
   if (!port) {
