@@ -49,6 +49,29 @@ client.connect().then(()=> { //making sure the connection is successful
     });
   });
     
+  //POST /favourites/:userId
+  app.post<{userId: number}, {}, {photo_id: number, alt: string, url: string}>("/favourites/:userId", async (req, res) => {
+    const {photo_id, alt, url} = req.body;
+    const {userId} = req.params;
+
+
+    //to ckeck for duplicate photos
+    const dbres1 = await client.query(`select * from favourites where user_id = $1 and photo_id = $2`, [userId, photo_id]);
+    if (dbres1.rows.length===0){
+      const dbres2 = await client.query(`insert into favourites (user_id, photo_id, alt, url) values ($1,$2,$3,$4) returning *`, [userId, photo_id, alt, url]);
+      const photoInserted = dbres2.rows;
+
+      res.json({
+        result: "success",
+        data: photoInserted
+      });
+    } else {
+      res.status(405).json({
+        result: "failed",
+        data: `photo_id ${photo_id} for user id ${userId} is already in favourites table`
+      });
+    }
+  });
 
   //Start the server on the given port
   const port = process.env.PORT;
