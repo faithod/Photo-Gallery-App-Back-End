@@ -54,10 +54,17 @@ client.connect().then(()=> { //making sure the connection is successful
       const { userId } = req.params;
       const dbres = await client.query('select * from favourites where user_id = $1', [userId]);
       const listOfFavourites = dbres.rows;
-      res.json({
-        result: "success",
-        data: listOfFavourites
-      });
+      if (dbres.rows.length===0) {
+        res.json({
+          result: "failed",
+          data: `user ID: ${userId} does not exist`
+        });
+      } else {
+        res.json({
+          result: "success",
+          data: listOfFavourites
+        });
+      }
     });
     
   //POST /favourites/:userId
