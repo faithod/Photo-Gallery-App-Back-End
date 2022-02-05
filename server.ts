@@ -91,6 +91,36 @@ client.connect().then(()=> { //making sure the connection is successful
     }
   });
 
+    //DELETE /favourites/:userId/:photoId
+    app.delete<{userId: number, photoId: number}, {}, {}>("/favourites/:userId/:photoId", async (req, res) => {
+      const {userId,photoId} = req.params;
+  
+      //checking if user id exists
+      const dbres1 = await client.query(`select * from favourites where user_id = $1 `, [userId]);
+      if (dbres1.rows.length===0) {
+        res.status(404).json({
+          result: "failed",
+          data: `user ID: ${userId} does not exist`
+        });
+      }
+      //checking if photo exists
+      const dbres2 = await client.query(`select * from favourites where photo_id = $1 `, [photoId]);
+      if (dbres2.rows.length===0) {
+        res.status(404).json({
+          result: "failed",
+          data: `Could not find a photo with this id`
+        });
+      }
+
+      const dbres = await client.query(`delete from favourites where user_id = $1 and photo_id = $2 returning *`, [userId, photoId]);
+      const photoDeleted = dbres.rows;
+
+      res.json({
+        result: "success",
+        data: photoDeleted
+      });
+    });
+
   //Start the server on the given port
   const port = process.env.PORT;
   if (!port) {
