@@ -48,6 +48,17 @@ client.connect().then(()=> { //making sure the connection is successful
       data: listOfFavourites
     });
   });
+
+    //GET /favourites/:userId
+    app.get<{userId: number}, {}, {}>("/favourites/:userId", async (req, res) => {
+      const { userId } = req.params;
+      const dbres = await client.query('select * from favourites where user_id = $1', [userId]);
+      const listOfFavourites = dbres.rows;
+      res.json({
+        result: "success",
+        data: listOfFavourites
+      });
+    });
     
   //POST /favourites/:userId
   app.post<{userId: number}, {}, {photo_id: number, alt: string, url: string}>("/favourites/:userId", async (req, res) => {
